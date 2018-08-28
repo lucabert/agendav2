@@ -304,9 +304,8 @@ class agendav2 extends rcube_plugin
    */
   function load_env()
   {
-    if ($this->env_loaded) {
+    if($this->env_loaded)
       return;
-    }
 
     $this->env_loaded = true;
 
@@ -359,9 +358,9 @@ class agendav2 extends rcube_plugin
     $rcmail = rcmail::get_instance();
 
     $imap_password = $rcmail->decrypt($_SESSION['password']);
-    while(strlen($imap_password)<24) {
+    while(strlen($imap_password)<24)
       $imap_password .= $imap_password;
-    }
+
     $imap_password = substr($imap_password, 0, 24);
     $deskey_backup = $rcmail->config->set('agendav_des_key', $imap_password);
     $clear = $rcmail->decrypt($passwd, 'agendav_des_key');
