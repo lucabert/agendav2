@@ -1,0 +1,25 @@
+{
+    "name": "lucabert/agendav2",
+    "type": "roundcube-plugin",
+    "description": "Integration of AgenDAV2 into Roundcube.",
+    "keywords": ["agendav","calendar","event","task"],
+    "license": "GPLv2",
+    "version": "1.0",
+    "authors": [
+        {
+            "name": "Luca Bertoncello",
+            "email": "rcagendav@lucabert.de",
+            "role": "Developer"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "http://plugins.roundcube.net"
+        }
+    ],
+    "require": {
+        "php": ">=5.6.0",
+        "roundcube/plugin-installer": ">=0.1.6"
+    }
+}

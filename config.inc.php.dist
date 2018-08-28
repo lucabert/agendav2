@@ -1,0 +1,22 @@
+<?php
+
+// Map to translate Roundcube language codes into help document languages
+// The '*' entry will be used as default
+$config['agendav_language_map'] = array('*' => 'en_US');
+
+// name of agendav root folder
+$config['agendav_path'] = 'agendav-2.2.0';
+
+
+// Nothing should be changed after this line
+define('BASEPATH','/');
+
+require_once(__DIR__.'/'.$config['agendav_path'].'/web/config/settings.php');
+$config['agendav_encryption_key'] = $config['encryption_key'];
+$config['agendav_dbtype'] = $app['db.options']['driver'];
+$config['agendav_dbhost'] = $app['db.options']['host'];
+$config['agendav_dbname'] = $app['db.options']['dbname'];
+$config['agendav_dbuser'] = $app['db.options']['user'];
+$config['agendav_dbpass'] = $app['db.options']['password'];
+$config['agendav_dbprefix'] = $app['db.options']['dbprefix'];
+?>
