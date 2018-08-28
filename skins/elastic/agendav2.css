@@ -1,0 +1,28 @@
+#sections-table #rcmrowagendav2 .section {
+  background-image: url(agendav2_icon.png);
+  background-position: 1px 0px;
+  background-repeat: no-repeat;
+  padding-left: 33px;
+}
+
+#sections-table #rcmrowagendav2.selected .section {
+  background-image: url(agendav2_icon.png);
+  background-position: 1px 0px;
+  background-repeat: no-repeat;
+  padding-left: 33px;
+}
+
+#taskbar a.button-agendav2 span.button-inner {
+  background: url(agendav2_icon.png) 0 0 no-repeat;
+  height: 19px;
+}
+
+#taskbar a.button-agendav2:hover span.button-inner,
+#taskbar a.button-agendav2.button-selected span.button-inner {
+  background: url(agendav2_icon.png) 0 -24px no-repeat;
+  height: 19px;
+}
+
+.agendav2title {
+  display: block !important;
+}

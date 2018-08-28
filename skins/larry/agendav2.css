@@ -1,0 +1,17 @@
+#sections-table #rcmrowagendav2 .section {
+  background-image: url(agendav2_icon.png);
+  background-position: 1px 0px;
+  background-repeat: no-repeat;
+  padding-left: 33px;
+}
+
+#sections-table #rcmrowagendav2.selected .section {
+  background-image: url(agendav2_icon.png);
+  background-position: 1px 0px;
+  background-repeat: no-repeat;
+  padding-left: 33px;
+}
+
+#agendav2contentframe {
+  width: 100%;
+}
