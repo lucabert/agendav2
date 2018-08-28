@@ -216,7 +216,7 @@ class agendav2 extends rcube_plugin
 
   /**
    * Handler for preferences_list hook.
-   * Adds options blocks into Enigma settings sections in Preferences.
+   * Adds options blocks into AgenDAV settings sections in Preferences.
    *
    * @param array Original parameters
    *
@@ -250,7 +250,7 @@ class agendav2 extends rcube_plugin
 
   /**
    * Handler for preferences_save hook.
-   * Executed on Enigma settings form submit.
+   * Executed on AgenDAV settings form submit.
    *
    * @param array Original parameters
    *
