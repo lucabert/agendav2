@@ -15,7 +15,7 @@ $app['csrf.secret'] = '<secret (random 12)>';
 $app['log.path'] = __DIR__.'/../../log/';
 
 // Logging level
-$app['log.level'] = 'INFO';
+$app['log.level'] = 'WARNING';
 
 // Authentication method required by CalDAV server (basic or digest)
 $app['caldav.authmethod'] = 'basic';
