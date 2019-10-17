@@ -177,6 +177,9 @@ class agendav2 extends rcube_plugin
 
     $url = $this->rc->config->get('agendav2_url');
     $username = $this->rc->config->get('agendav2_username');
+    if (substr($url, -10) === "caldav.php") {
+      $url = $url.'/'.$username; // DAViCal url
+    }
     $passwd = $this->decrypt($this->rc->config->get('agendav2_passwd'));
 
     $agendavSessID = $this->createAgendavSession($url, $username, $passwd);
@@ -278,9 +281,16 @@ class agendav2 extends rcube_plugin
       curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PROPFIND');
       $content = curl_exec($ch);
       $ret = curl_getinfo($ch);
+      $curl_error = curl_error($ch);
       curl_close($ch);
-      $xml = new SimpleXMLElement($content);
-      if($ret['http_code'] >= 200 && $ret['http_code'] < 300)
+      if (!$curl_error){
+        try {
+          $xml = new SimpleXMLElement($content);
+        } catch (Exception $e) {
+          $xml = NULL; // in case of incorrect user/pwd, DAViCal returns a plain text error message
+        }
+      }
+      if($ret['http_code'] >= 200 && $ret['http_code'] < 300 && !$curl_error && $xml)
       {
         $p['prefs'] = array(
             'agendav2_url'       => $url,
@@ -290,9 +300,17 @@ class agendav2 extends rcube_plugin
       }
       else
       {
-        $s = $xml->children('s', true);
+        if ($curl_error) {
+          $error_message = $curl_error;
+        } elseif (!$xml) {
+          $error_message = $content;
+          // in case of incorrect user/pwd, DAViCal returns a plain text error
+        } else {
+          $s = $xml->children('s', true);
+          $error_message = $s->message;
+        }
         $p['abort'] = true;
-        $p['message'] = sprintf($this->gettext('err_propfind'), (string) $s->message);
+        $p['message'] = sprintf($this->gettext('err_propfind'), (string) $error_message);
       }
     }
 
