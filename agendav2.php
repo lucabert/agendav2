@@ -232,16 +232,23 @@ class agendav2 extends rcube_plugin
       return $p;
 
     $urlV = rcube_utils::get_input_value('agendav2_url', rcube_utils::INPUT_POST);
+    $verifycertV = rcube_utils::get_input_value('agendav2_verifycert', rcube_utils::INPUT_POST);
     $usernameV = rcube_utils::get_input_value('agendav2_username', rcube_utils::INPUT_POST);
     $passwdV = rcube_utils::get_input_value('agendav2_passwd', rcube_utils::INPUT_POST);
-
+    if (!$verifycertV) {
+       $verifycertV = $this->rc->config->get('agendav2_verifycert') === 'y' ? 1 : 0; 
+    } else {
+       $verifycertV = 1;
+    }
     $url = new html_inputfield(array('name' => 'agendav2_url', 'type' => 'text', 'autocomplete' => 'off', 'value' => $urlV != '' ? $urlV : $this->rc->config->get('agendav2_url'), 'size' => 255));
+    $verifycert = new html_checkbox(array('name' => 'agendav2_verifycert', 'autocomplete' => 'off', 'value' => '1'));    
     $username = new html_inputfield(array('name' => 'agendav2_username', 'type' => 'text', 'autocomplete' => 'off', 'value' => $usernameV != '' ? $usernameV : $this->rc->config->get('agendav2_username'), 'size' => 255));
     $passwd = new html_inputfield(array('name' => 'agendav2_passwd', 'type' => 'password', 'autocomplete' => 'off', 'value' => '', 'size' => 255));
 
     $p['blocks']['agendav2_preferences_section'] = array(
                         'options' => array(
                                 array('title'=> rcube::Q($this->gettext('caldav_url')), 'content' => $url->show()),
+                                array('title'=> rcube::Q($this->gettext('verifycert')), 'content' => $verifycert->show($verifycertV)),
                                 array('title'=> rcube::Q($this->gettext('username')), 'content' => $username->show()),
                                 array('title'=> rcube::Q($this->gettext('password')), 'content' => $passwd->show()),
                         ),
@@ -267,15 +274,20 @@ class agendav2 extends rcube_plugin
       $rcmail = rcmail::get_instance();
 
       $url = rcube_utils::get_input_value('agendav2_url', rcube_utils::INPUT_POST);
+      $verifycert = rcube_utils::get_input_value('agendav2_verifycert', rcube_utils::INPUT_POST);
       $username = rcube_utils::get_input_value('agendav2_username', rcube_utils::INPUT_POST);
       $passwd = rcube_utils::get_input_value('agendav2_passwd', rcube_utils::INPUT_POST);
       if($passwd == '')
         $passwd = $this->decrypt($this->rc->config->get('agendav2_passwd'));
-
+      $verifycert = (!$verifycert) ? 'n' : 'y';
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $url);
       curl_setopt($ch, CURLOPT_USERPWD, "$username:$passwd");
       curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+      if ($verifycert == 'n') {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+      }
       curl_setopt($ch, CURLOPT_HEADER, 0);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
       curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PROPFIND');
@@ -293,9 +305,10 @@ class agendav2 extends rcube_plugin
       if($ret['http_code'] >= 200 && $ret['http_code'] < 300 && !$curl_error && $xml)
       {
         $p['prefs'] = array(
-            'agendav2_url'       => $url,
-            'agendav2_username'  => $username,
-            'agendav2_passwd'    => $this->encrypt($passwd),
+            'agendav2_url'         => $url,
+            'agendav2_verifycert' => $verifycert,
+            'agendav2_username'    => $username,
+            'agendav2_passwd'      => $this->encrypt($passwd),
         );
       }
       else
