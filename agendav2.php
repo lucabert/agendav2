@@ -174,13 +174,18 @@ class agendav2 extends rcube_plugin
   function content($attrib)
   {
     $rcmail = rcmail::get_instance();
-
-    $url = $this->rc->config->get('agendav2_url');
-    $username = $this->rc->config->get('agendav2_username');
+    if($rcmail->config->get('agendav_enable_SSO')) {
+      $url = $rcmail->config->get('agendav_caldav.baseurl');
+      $username = $rcmail->get_user_name();
+      $passwd = $rcmail->get_user_password();
+    } else {
+      $url = $this->rc->config->get('agendav2_url');
+      $username = $this->rc->config->get('agendav2_username');
+      $passwd = $this->decrypt($this->rc->config->get('agendav2_passwd'));
+    }
     if (substr($url, -10) === "caldav.php") {
       $url = $url.'/'.$username; // DAViCal url
     }
-    $passwd = $this->decrypt($this->rc->config->get('agendav2_passwd'));
 
     $agendavSessID = $this->createAgendavSession($url, $username, $passwd);
     setcookie('agendav_sess', $agendavSessID, 0);
@@ -208,6 +213,10 @@ class agendav2 extends rcube_plugin
    */
   function agendav2_preferences_sections_list($p)
   {
+    $rcmail = rcmail::get_instance();
+    if($rcmail->config->get('agendav_enable_SSO')) {
+      return false;
+    }
     $this->add_texts('localization/');
     $p['list']['agendav2'] = array(
         'id' => 'agendav2',
@@ -227,6 +236,10 @@ class agendav2 extends rcube_plugin
    */
   function agendav2_preferences_list($p)
   {
+    $rcmail = rcmail::get_instance();
+    if($rcmail->config->get('agendav_enable_SSO')) {
+      return false;
+    }
     $this->add_texts('localization/');
     if($p['section'] != 'agendav2')
       return $p;

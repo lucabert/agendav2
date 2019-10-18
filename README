@@ -41,7 +41,7 @@ INSTALL
    cd /your/path/to/roundcube/plugins/agendav2
    wget https://github.com/agendav/agendav/releases/download/2.2.0/agendav-2.2.0.tar.gz -O-|tar xzf -
 
-3. Copy agendav.settings.php into /your/path/to/roundcube/plugins/agendav/agendav-2.2.0/web/config/settings.php
+3. Copy agendav.settings.php into /your/path/to/roundcube/plugins/agendav2/agendav-2.2.0/web/config/settings.php
    Change the connection settings for the database and the value for csrf.secret.
 
 
@@ -49,14 +49,27 @@ INSTALL
 CONFIGURATION
 
 1. Copy 'config.inc.php.dist' to 'config.inc.php'.
-   Edit the plugin configuration file 'config.inc.php' and set agendav_path.
+   Edit the plugin configuration file 'config.inc.php' and set agendav_path and
+   agendav_enable_SSO.
 
    // name of agendav root folder
    $config['agendav_path'] = 'agendav-2.2.0';
+   
+   // enable SSO
+   // * it only works when RoundCube and AgenDAV use the same authentication
+   //   backend, because this plugin uses your RoundCube credentials to 
+   //   authenticate to AgenDAV
+   // * if enabled, roundcube calendar options menu will be disabled
+   // * if disabled, you will have to manually enter caldav url, username and
+   //   password in Roundcube Calendar settings
+   $config['agendav_enable_SSO'] = false;
 
 2. Configure AgenDAV according to the documentation:
    http://docs.agendav.org/en/2.2.0/admin/installation/
    No special config is needed to allow AgenDAV work with this plugin.
+   Please note that if you have enabled SSO as explained above, you must set
+   caldav baseurl and any other connection settings (f.e. server certificate
+   verification) into /your/path/to/roundcube/plugins/agendav2/agendav-2.2.0/web/config/settings.php
 
 3. Create and populate the database for AgenDAV.
 
