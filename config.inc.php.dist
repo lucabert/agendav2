@@ -7,6 +7,14 @@ $config['agendav_language_map'] = array('*' => 'en_US');
 // name of agendav root folder
 $config['agendav_path'] = 'agendav-2.2.0';
 
+// enable SSO
+// * it only works when RoundCube and AgenDAV use the same authentication
+//   backend, because this plugin uses your RoundCube credentials to 
+//   authenticate to AgenDAV
+// * if enabled, roundcube calendar options menu will be disabled
+// * if disabled, you will have to manually enter caldav url, username and
+//   password in Roundcube Calendar settings
+$config['agendav_enable_SSO'] = false;
 
 // Nothing should be changed after this line
 define('BASEPATH','/');
@@ -19,4 +27,5 @@ $config['agendav_dbname'] = $app['db.options']['dbname'];
 $config['agendav_dbuser'] = $app['db.options']['user'];
 $config['agendav_dbpass'] = $app['db.options']['password'];
 $config['agendav_dbprefix'] = $app['db.options']['dbprefix'];
+$config['agendav_caldav.baseurl'] = $app['caldav.baseurl'];
 ?>

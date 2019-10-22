@@ -174,10 +174,18 @@ class agendav2 extends rcube_plugin
   function content($attrib)
   {
     $rcmail = rcmail::get_instance();
-
-    $url = $this->rc->config->get('agendav2_url');
-    $username = $this->rc->config->get('agendav2_username');
-    $passwd = $this->decrypt($this->rc->config->get('agendav2_passwd'));
+    if($rcmail->config->get('agendav_enable_SSO')) {
+      $url = $rcmail->config->get('agendav_caldav.baseurl');
+      $username = $rcmail->get_user_name();
+      $passwd = $rcmail->get_user_password();
+    } else {
+      $url = $this->rc->config->get('agendav2_url');
+      $username = $this->rc->config->get('agendav2_username');
+      $passwd = $this->decrypt($this->rc->config->get('agendav2_passwd'));
+    }
+    if (substr($url, -10) === "caldav.php") {
+      $url = $url.'/'.$username; // DAViCal url
+    }
 
     $agendavSessID = $this->createAgendavSession($url, $username, $passwd);
     setcookie('agendav_sess', $agendavSessID, 0);
@@ -205,6 +213,10 @@ class agendav2 extends rcube_plugin
    */
   function agendav2_preferences_sections_list($p)
   {
+    $rcmail = rcmail::get_instance();
+    if($rcmail->config->get('agendav_enable_SSO')) {
+      return false;
+    }
     $this->add_texts('localization/');
     $p['list']['agendav2'] = array(
         'id' => 'agendav2',
@@ -224,21 +236,32 @@ class agendav2 extends rcube_plugin
    */
   function agendav2_preferences_list($p)
   {
+    $rcmail = rcmail::get_instance();
+    if($rcmail->config->get('agendav_enable_SSO')) {
+      return false;
+    }
     $this->add_texts('localization/');
     if($p['section'] != 'agendav2')
       return $p;
 
     $urlV = rcube_utils::get_input_value('agendav2_url', rcube_utils::INPUT_POST);
+    $verifycertV = rcube_utils::get_input_value('agendav2_verifycert', rcube_utils::INPUT_POST);
     $usernameV = rcube_utils::get_input_value('agendav2_username', rcube_utils::INPUT_POST);
     $passwdV = rcube_utils::get_input_value('agendav2_passwd', rcube_utils::INPUT_POST);
-
+    if (!$verifycertV) {
+       $verifycertV = $this->rc->config->get('agendav2_verifycert') === 'y' ? 1 : 0; 
+    } else {
+       $verifycertV = 1;
+    }
     $url = new html_inputfield(array('name' => 'agendav2_url', 'type' => 'text', 'autocomplete' => 'off', 'value' => $urlV != '' ? $urlV : $this->rc->config->get('agendav2_url'), 'size' => 255));
+    $verifycert = new html_checkbox(array('name' => 'agendav2_verifycert', 'autocomplete' => 'off', 'value' => '1'));    
     $username = new html_inputfield(array('name' => 'agendav2_username', 'type' => 'text', 'autocomplete' => 'off', 'value' => $usernameV != '' ? $usernameV : $this->rc->config->get('agendav2_username'), 'size' => 255));
     $passwd = new html_inputfield(array('name' => 'agendav2_passwd', 'type' => 'password', 'autocomplete' => 'off', 'value' => '', 'size' => 255));
 
     $p['blocks']['agendav2_preferences_section'] = array(
                         'options' => array(
                                 array('title'=> rcube::Q($this->gettext('caldav_url')), 'content' => $url->show()),
+                                array('title'=> rcube::Q($this->gettext('verifycert')), 'content' => $verifycert->show($verifycertV)),
                                 array('title'=> rcube::Q($this->gettext('username')), 'content' => $username->show()),
                                 array('title'=> rcube::Q($this->gettext('password')), 'content' => $passwd->show()),
                         ),
@@ -264,35 +287,56 @@ class agendav2 extends rcube_plugin
       $rcmail = rcmail::get_instance();
 
       $url = rcube_utils::get_input_value('agendav2_url', rcube_utils::INPUT_POST);
+      $verifycert = rcube_utils::get_input_value('agendav2_verifycert', rcube_utils::INPUT_POST);
       $username = rcube_utils::get_input_value('agendav2_username', rcube_utils::INPUT_POST);
       $passwd = rcube_utils::get_input_value('agendav2_passwd', rcube_utils::INPUT_POST);
       if($passwd == '')
         $passwd = $this->decrypt($this->rc->config->get('agendav2_passwd'));
-
+      $verifycert = (!$verifycert) ? 'n' : 'y';
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $url);
       curl_setopt($ch, CURLOPT_USERPWD, "$username:$passwd");
       curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+      if ($verifycert == 'n') {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+      }
       curl_setopt($ch, CURLOPT_HEADER, 0);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
       curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PROPFIND');
       $content = curl_exec($ch);
       $ret = curl_getinfo($ch);
+      $curl_error = curl_error($ch);
       curl_close($ch);
-      $xml = new SimpleXMLElement($content);
-      if($ret['http_code'] >= 200 && $ret['http_code'] < 300)
+      if (!$curl_error){
+        try {
+          $xml = new SimpleXMLElement($content);
+        } catch (Exception $e) {
+          $xml = NULL; // in case of incorrect user/pwd, DAViCal returns a plain text error message
+        }
+      }
+      if($ret['http_code'] >= 200 && $ret['http_code'] < 300 && !$curl_error && $xml)
       {
         $p['prefs'] = array(
-            'agendav2_url'       => $url,
-            'agendav2_username'  => $username,
-            'agendav2_passwd'    => $this->encrypt($passwd),
+            'agendav2_url'         => $url,
+            'agendav2_verifycert' => $verifycert,
+            'agendav2_username'    => $username,
+            'agendav2_passwd'      => $this->encrypt($passwd),
         );
       }
       else
       {
-        $s = $xml->children('s', true);
+        if ($curl_error) {
+          $error_message = $curl_error;
+        } elseif (!$xml) {
+          $error_message = $content;
+          // in case of incorrect user/pwd, DAViCal returns a plain text error
+        } else {
+          $s = $xml->children('s', true);
+          $error_message = $s->message;
+        }
         $p['abort'] = true;
-        $p['message'] = sprintf($this->gettext('err_propfind'), (string) $s->message);
+        $p['message'] = sprintf($this->gettext('err_propfind'), (string) $error_message);
       }
     }
 
