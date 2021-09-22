@@ -5,7 +5,7 @@
 $config['agendav_language_map'] = array('*' => 'en_US');
 
 // name of agendav root folder
-$config['agendav_path'] = 'agendav-2.2.0';
+$config['agendav_path'] = 'agendav-2.2.1';
 
 // enable SSO
 // * it only works when RoundCube and AgenDAV use the same authentication
